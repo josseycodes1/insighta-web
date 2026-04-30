@@ -1,57 +1,123 @@
-# Insighta Labs+ — Web Portal
+# Insighta Labs+ Web Portal
 
-Next.js 14 frontend for the Profile Intelligence System.
+Next.js web portal for non-technical Insighta Labs+ users. The portal uses the same backend APIs as the CLI, giving analysts and admins a browser-based interface for profile intelligence workflows.
+
+## Live URL
+
+- Web portal: `https://insighta-web-azure.vercel.app`
+- Backend API: `https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev`
+
+## Repository Role
+
+This repository is the web interface in the three-repository Stage 3 architecture:
+
+- Backend API: authentication, RBAC, profiles, search, export, logging.
+- CLI: terminal interface for engineers and power users.
+- Web portal: browser interface for analysts and internal stakeholders.
 
 ## Pages
 
-| Route            | Description                   |
-| ---------------- | ----------------------------- |
-| `/`              | Landing page                  |
-| `/login`         | Email/password + GitHub OAuth |
-| `/signup`        | Register new account          |
-| `/auth/callback` | GitHub OAuth token handler    |
-| `/dashboard`     | Main profile management UI    |
+| Route | Purpose |
+| --- | --- |
+| `/` | Product entry screen |
+| `/login` | Email/password and GitHub OAuth login |
+| `/signup` | Access request / registration |
+| `/auth/callback` | OAuth token callback handler |
+| `/dashboard` | Metrics, profile list, filters, search, create/delete/export controls |
+| `/profiles/[id]` | Profile detail view |
+| `/search` | Dedicated natural language search page |
+| `/account` | Role and session controls |
 
-## Setup
+## Authentication Flow
+
+1. User clicks "Continue with GitHub" on `/login`.
+2. Browser redirects to the backend GitHub OAuth route.
+3. Backend handles the callback through Django/allauth.
+4. Backend creates or retrieves the user and issues tokens.
+5. The portal stores the role for UI display and sends authenticated requests with cookies and/or bearer tokens.
+
+The intended production security model is HTTP-only cookies with CSRF protection so tokens are not exposed to JavaScript.
+
+## Backend API Contract
+
+All profile API calls include:
+
+```http
+X-API-Version: 1
+```
+
+The portal uses:
+
+- `/api/profiles/` for profile lists, filters, sorting, pagination, and admin profile creation.
+- `/api/profiles/search/` for natural language search.
+- `/api/profiles/{id}/` for profile detail and admin deletion.
+- `/api/profiles/export/` for admin CSV export.
+
+## Role Enforcement
+
+| Role | Web behavior |
+| --- | --- |
+| `admin` | Can create, delete, export, list, and search |
+| `analyst` | Can list and search |
+
+The UI hides admin-only controls for analysts. The backend still enforces permissions on every request.
+
+## Natural Language Search
+
+Search accepts plain English and delegates parsing to the backend rule-based parser.
+
+Examples:
+
+```text
+young males from nigeria
+females above 30
+adult males from kenya
+```
+
+## Environment Variables
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+For production, set `NEXT_PUBLIC_API_URL` to the deployed backend URL.
+
+## Local Setup
 
 ```bash
-cp .env.example .env.local
-# Edit .env.local with your backend URL
-
 npm install
 npm run dev
 ```
 
-## Auth Flow
+Open:
 
-### GitHub OAuth (browser)
+```text
+http://localhost:3000
+```
 
-1. User clicks "Continue with GitHub" on `/login`
-2. Redirected to `{API_BASE}/accounts/github/login/?process=login`
-3. Allauth handles OAuth dance → calls your `GitHubLogin` view
-4. Backend redirects to `https://insighta-web-azure.vercel.app/auth/callback?access=...&refresh=...&role=...`
-5. `/auth/callback` stores tokens and redirects to `/dashboard`
+## Quality Checks
 
-### Email/Password (cookie-based)
+```bash
+npm run lint
+npm test
+npm run build
+```
 
-1. POST to `/api/v1/auth/login/` with `{email, password}`
-2. Backend (`CookieLoginView`) sets HTTP-only cookies: `access_token` + `refresh_token`
-3. All subsequent requests use `credentials: "include"` to send cookies automatically
+## CI/CD
 
-## Role Enforcement (UI)
+GitHub Actions workflow: `.github/workflows/ci.yml`
 
-- **Analyst**: Can view profiles, create profiles, use NLP search
-- **Admin**: Everything above + delete profiles + export CSV
+Runs on pull requests and pushes to `main`:
 
-The role is returned in the login response body and stored in `localStorage` for UI display. The **actual enforcement** happens on the backend.
+- `npm ci`
+- `npm run lint`
+- `npm test`
+- `npm run build`
 
-## API Calls
+## Engineering Standards
 
-All requests use `credentials: "include"` for cookie-based auth.  
-Falls back to `Authorization: Bearer <token>` header if a token is in `localStorage`.
-
-## Environment Variables
-
-| Variable              | Description |
-| --------------------- | ----------- |
-| `NEXT_PUBLIC_API_URL` | backend URL |
+- Use conventional commits, for example `feat(web): add dashboard filters`.
+- Open pull requests before merging to `main`.
+- Keep backend URLs in environment variables.

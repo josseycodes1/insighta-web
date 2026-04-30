@@ -32,6 +32,7 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   const token = getToken();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
+    "X-API-Version": "1",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...((options.headers as Record<string, string>) || {}),
   };
@@ -85,6 +86,7 @@ export default function DashboardPage() {
         const res = await fetch(`${API_BASE}/api/profiles/?${params}`, {
           headers: {
             "Content-Type": "application/json",
+            "X-API-Version": "1",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           credentials: "include",
@@ -179,7 +181,10 @@ export default function DashboardPage() {
     try {
       const token = getToken();
       const res = await fetch(`${API_BASE}/api/profiles/export/csv/`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: {
+          "X-API-Version": "1",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         credentials: "include",
       });
       if (!res.ok) {
