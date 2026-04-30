@@ -46,8 +46,7 @@ export default function LoginPage() {
   };
 
   const handleGitHubLogin = () => {
-    // Redirect to allauth GitHub OAuth initiation
-    window.location.href = `${API_BASE}/accounts/github/login/?process=login`;
+    window.location.href = `${API_BASE}/auth/github`;
   };
 
   return (

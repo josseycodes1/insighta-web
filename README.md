@@ -31,10 +31,11 @@ This repository is the web interface in the three-repository Stage 3 architectur
 ## Authentication Flow
 
 1. User clicks "Continue with GitHub" on `/login`.
-2. Browser redirects to the backend GitHub OAuth route.
-3. Backend handles the callback through Django/allauth.
-4. Backend creates or retrieves the user and issues tokens.
-5. The portal stores the role for UI display and sends authenticated requests with cookies and/or bearer tokens.
+2. Browser redirects to backend `GET /auth/github`.
+3. Backend generates PKCE and state, stores HttpOnly validation cookies, and redirects to GitHub.
+4. GitHub redirects to `GET /auth/github/callback`.
+5. Backend validates state/PKCE, creates or retrieves the user, issues tokens, and sets HttpOnly token cookies.
+6. The portal stores the role for UI display and sends authenticated requests with cookies and/or bearer tokens.
 
 The intended production security model is HTTP-only cookies with CSRF protection so tokens are not exposed to JavaScript.
 

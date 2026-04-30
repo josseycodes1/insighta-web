@@ -205,7 +205,7 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     try {
-      await apiFetch("/api/v1/auth/logout/", { method: "POST" });
+      await apiFetch("/auth/logout", { method: "POST" });
     } catch {}
     localStorage.clear();
     router.push("/login");
