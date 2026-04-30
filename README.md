@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Insighta Labs+ — Web Portal
 
-## Getting Started
+Next.js 14 frontend for the Profile Intelligence System.
 
-First, run the development server:
+## Pages
+
+| Route            | Description                   |
+| ---------------- | ----------------------------- |
+| `/`              | Landing page                  |
+| `/login`         | Email/password + GitHub OAuth |
+| `/signup`        | Register new account          |
+| `/auth/callback` | GitHub OAuth token handler    |
+| `/dashboard`     | Main profile management UI    |
+
+## Setup
 
 ```bash
+cp .env.example .env.local
+# Edit .env.local with your backend URL
+
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Auth Flow
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### GitHub OAuth (browser)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. User clicks "Continue with GitHub" on `/login`
+2. Redirected to `{API_BASE}/accounts/github/login/?process=login`
+3. Allauth handles OAuth dance → calls your `GitHubLogin` view
+4. Backend redirects to `https://insighta-web-azure.vercel.app/auth/callback?access=...&refresh=...&role=...`
+5. `/auth/callback` stores tokens and redirects to `/dashboard`
 
-## Learn More
+### Email/Password (cookie-based)
 
-To learn more about Next.js, take a look at the following resources:
+1. POST to `/api/v1/auth/login/` with `{email, password}`
+2. Backend (`CookieLoginView`) sets HTTP-only cookies: `access_token` + `refresh_token`
+3. All subsequent requests use `credentials: "include"` to send cookies automatically
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Role Enforcement (UI)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Analyst**: Can view profiles, create profiles, use NLP search
+- **Admin**: Everything above + delete profiles + export CSV
 
-## Deploy on Vercel
+The role is returned in the login response body and stored in `localStorage` for UI display. The **actual enforcement** happens on the backend.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Calls
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+All requests use `credentials: "include"` for cookie-based auth.  
+Falls back to `Authorization: Bearer <token>` header if a token is in `localStorage`.
+
+## Environment Variables
+
+| Variable              | Description |
+| --------------------- | ----------- |
+| `NEXT_PUBLIC_API_URL` | backend URL |

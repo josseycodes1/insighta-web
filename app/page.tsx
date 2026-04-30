@@ -1,471 +1,197 @@
 "use client";
-
 import Link from "next/link";
-import {
-  FaChartLine,
-  FaSearch,
-  FaDownload,
-  FaGithub,
-  FaRocket,
-  FaArrowRight,
-  FaCheckCircle,
-  FaDatabase,
-  FaRobot,
-} from "react-icons/fa";
-import { MdAnalytics } from "react-icons/md";
-import { FiBarChart2, FiLock, FiUsers } from "react-icons/fi";
-import { SiCts } from "react-icons/si";
+import { useEffect, useRef } from "react";
 
 export default function LandingPage() {
+  const gridRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!gridRef.current) return;
+      const rect = gridRef.current.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      gridRef.current.style.setProperty("--mx", `${x}%`);
+      gridRef.current.style.setProperty("--my", `${y}%`);
+    };
+    window.addEventListener("mousemove", handler);
+    return () => window.removeEventListener("mousemove", handler);
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header / Navigation */}
-      <header className="fixed top-0 w-full bg-white border-b border-gray-200 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center gap-2">
-              <FaChartLine className="text-2xl text-gray-900" />
-              <span className="text-xl font-bold text-gray-900">
-                Insighta Labs+
+    <main className="relative min-h-screen bg-[#080A0F] text-white overflow-hidden font-mono">
+      {/* Animated grid background */}
+      <div
+        ref={gridRef}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px)
+          `,
+          backgroundSize: "40px 40px",
+          maskImage:
+            "radial-gradient(ellipse 60% 60% at var(--mx, 50%) var(--my, 50%), black 0%, transparent 100%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 60% 60% at var(--mx, 50%) var(--my, 50%), black 0%, transparent 100%)",
+        }}
+      />
+
+      {/* Top glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[1px] bg-gradient-to-r from-transparent via-[#00FF88] to-transparent opacity-60" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-[radial-gradient(ellipse_at_top,rgba(0,255,136,0.06)_0%,transparent_70%)]" />
+
+      {/* Nav */}
+      <nav className="relative z-10 flex items-center justify-between px-8 py-6 border-b border-white/5">
+        <div className="flex items-center gap-3">
+          <div className="w-6 h-6 border border-[#00FF88] rotate-45 flex items-center justify-center">
+            <div className="w-2 h-2 bg-[#00FF88]" />
+          </div>
+          <span className="text-sm tracking-[0.3em] text-white/80 uppercase">
+            Insighta Labs<span className="text-[#00FF88]">+</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-6 text-xs text-white/40 tracking-widest uppercase">
+          <span className="hover:text-white/70 cursor-pointer transition-colors">
+            Docs
+          </span>
+          <Link href="/login">
+            <button className="px-4 py-2 border border-white/10 hover:border-[#00FF88]/50 hover:text-[#00FF88] transition-all text-white/60">
+              Sign In
+            </button>
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero */}
+      <section className="relative z-10 flex flex-col items-center justify-center min-h-[85vh] px-8 text-center">
+        {/* Status tag */}
+        <div className="mb-8 flex items-center gap-2 px-3 py-1.5 border border-[#00FF88]/20 bg-[#00FF88]/5">
+          <span className="w-1.5 h-1.5 bg-[#00FF88] rounded-full animate-pulse" />
+          <span className="text-[10px] tracking-[0.4em] text-[#00FF88] uppercase">
+            System Online — v1.0
+          </span>
+        </div>
+
+        <h1
+          className="text-6xl md:text-8xl font-black tracking-tighter mb-6 leading-[0.9]"
+          style={{ fontFamily: "'Space Mono', monospace" }}
+        >
+          <span className="text-white">Profile</span>
+          <br />
+          <span
+            className="text-transparent bg-clip-text"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, #00FF88 0%, #00CCFF 50%, #00FF88 100%)",
+              backgroundSize: "200% 200%",
+              animation: "gradientShift 4s ease infinite",
+            }}
+          >
+            Intelligence
+          </span>
+          <br />
+          <span className="text-white/20">Engine</span>
+        </h1>
+
+        <p className="max-w-xl text-sm text-white/40 leading-relaxed tracking-wide mb-12">
+          Unified identity resolution platform. Ingest names, resolve
+          demographics across external sources, query in natural language.
+          Role-gated. Audit-logged. Built for analysts.
+        </p>
+
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <Link href="/signup">
+            <button className="group relative px-8 py-3 bg-[#00FF88] text-black text-xs font-bold tracking-[0.2em] uppercase hover:bg-[#00FF88]/90 transition-all overflow-hidden">
+              <span className="relative z-10">Get Access</span>
+              <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500 skew-x-12" />
+            </button>
+          </Link>
+          <Link href="/login">
+            <button className="px-8 py-3 border border-white/10 text-white/50 text-xs tracking-[0.2em] uppercase hover:border-white/30 hover:text-white/80 transition-all">
+              Sign In →
+            </button>
+          </Link>
+        </div>
+
+        {/* Stats row */}
+        <div className="mt-20 flex items-center gap-12 text-center">
+          {[
+            { value: "JWT", label: "Auth" },
+            { value: "2", label: "Role Tiers" },
+            { value: "NLP", label: "Search" },
+            { value: "CSV", label: "Export" },
+          ].map((s) => (
+            <div key={s.label} className="flex flex-col gap-1">
+              <span className="text-2xl font-black text-[#00FF88]">
+                {s.value}
+              </span>
+              <span className="text-[10px] text-white/30 tracking-widest uppercase">
+                {s.label}
               </span>
             </div>
-
-            <nav className="hidden md:flex items-center gap-8">
-              <Link
-                href="#features"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Features
-              </Link>
-              <Link
-                href="#how-it-works"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                How It Works
-              </Link>
-              <Link
-                href="#api"
-                className="text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                API
-              </Link>
-            </nav>
-
-            <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Sign In
-              </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                Get Started
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <FaRocket className="text-gray-600" />
-                <span className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
-                  Next Generation Intelligence
-                </span>
-              </div>
-              <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight mb-6">
-                Profile Intelligence at
-                <span className="text-gray-900"> Your Fingertips</span>
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Access comprehensive demographic insights through natural
-                language queries. Filter, sort, and analyze profile data with
-                unprecedented ease.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  href="/login"
-                  className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center gap-2"
-                >
-                  Get Started <FaArrowRight />
-                </Link>
-                <Link
-                  href="#features"
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Learn More
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 rounded-2xl p-8 shadow-sm border border-gray-200">
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-gray-700">
-                  <FaSearch className="text-gray-500" />
-                  <code className="bg-white px-3 py-2 rounded-lg text-sm border border-gray-200">
-                    young males from nigeria
-                  </code>
-                </div>
-                <div className="flex items-center gap-3 text-gray-700">
-                  <FaDatabase className="text-gray-500" />
-                  <code className="bg-white px-3 py-2 rounded-lg text-sm border border-gray-200">
-                    females above 30 with high confidence
-                  </code>
-                </div>
-                <div className="flex items-center gap-3 text-gray-700">
-                  <SiCts className="text-gray-500" />
-                  <code className="bg-white px-3 py-2 rounded-lg text-sm border border-gray-200">
-                    export profiles to CSV
-                  </code>
-                </div>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Powerful Features for Modern Intelligence
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Everything you need to query, analyze, and export demographic data
-              efficiently.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                <FaRobot className="text-xl text-gray-700" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Natural Language Search
-              </h3>
-              <p className="text-gray-600">
-                Query profiles using everyday language. Type &quot;young males
-                from nigeria&quot; and get instant results.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                <MdAnalytics className="text-xl text-gray-700" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Advanced Filtering
-              </h3>
-              <p className="text-gray-600">
-                Filter by gender, age range, country, and confidence scores.
-                Combine multiple filters for precise results.
-              </p>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                <SiCts className="text-xl text-gray-700" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                CSV Export
-              </h3>
-              <p className="text-gray-600">
-                Export filtered results to CSV format for further analysis.
-                Admin-only feature for data governance.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Three simple steps to access powerful demographic insights.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaGithub className="text-3xl text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                1. Sign in with GitHub
-              </h3>
-              <p className="text-gray-600">
-                Secure authentication using your GitHub account. No additional
-                passwords to remember.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FaSearch className="text-3xl text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                2. Query & Filter
-              </h3>
-              <p className="text-gray-600">
-                Use natural language or structured filters to find the profiles
-                you need.
-              </p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                <SiCts className="text-3xl text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                3. Analyze & Export
-              </h3>
-              <p className="text-gray-600">
-                Review results and export data for deeper analysis and
-                reporting.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* API Section */}
-      <section id="api" className="py-20 bg-gray-900 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                REST API for Developers
-              </h2>
-              <p className="text-gray-300 text-lg mb-6">
-                Integrate our intelligence platform into your applications with
-                our comprehensive REST API.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-3 text-gray-300">
-                  <FaCheckCircle className="text-gray-400" />
-                  <span>GitHub OAuth authentication with PKCE</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <FaCheckCircle className="text-gray-400" />
-                  <span>Role-based access control (Admin & Analyst)</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <FaCheckCircle className="text-gray-400" />
-                  <span>JWT tokens with short expiry windows</span>
-                </div>
-                <div className="flex items-center gap-3 text-gray-300">
-                  <FaCheckCircle className="text-gray-400" />
-                  <span>CSV export and pagination support</span>
-                </div>
-              </div>
-              <div className="mt-8">
-                <Link
-                  href="/api/docs"
-                  className="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors inline-flex items-center gap-2 font-medium"
-                >
-                  Explore API Docs <FaArrowRight />
-                </Link>
-              </div>
-            </div>
-
-            <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-              <pre className="text-sm text-gray-300 overflow-x-auto">
-                <code>{`# Natural language search
-curl -X GET "https://api.insighta.com/api/profiles/search/?q=young%20males%20from%20nigeria" \\
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Filter with parameters
-curl -X GET "https://api.insighta.com/api/profiles/?gender=male&country_id=NG&min_age=25" \\
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# Export to CSV
-curl -X GET "https://api.insighta.com/api/profiles/export/csv/" \\
-  -H "Authorization: Bearer YOUR_ADMIN_TOKEN"`}</code>
-              </pre>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 px-4 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">
-                Real-time
-              </div>
-              <p className="text-gray-600">Live data synchronization</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">
-                Role-based
-              </div>
-              <p className="text-gray-600">Admin & Analyst roles</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">
-                Secure
-              </div>
-              <p className="text-gray-600">JWT token authentication</p>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-gray-900 mb-2">
-                Scalable
-              </div>
-              <p className="text-gray-600">Handles large datasets</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gray-100 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Ready to transform your data analysis?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Join organizations using Insighta Labs+ to power their demographic
-            intelligence.
-          </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link
-              href="/login"
-              className="px-8 py-4 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-semibold"
+      {/* Feature grid */}
+      <section className="relative z-10 px-8 pb-24 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/5">
+          {[
+            {
+              icon: "◈",
+              title: "GitHub OAuth",
+              desc: "PKCE-secured social login. Roles assigned on first auth. Tokens scoped per session.",
+            },
+            {
+              icon: "⬡",
+              title: "Natural Language Search",
+              desc: 'Query profiles with plain English. "Young males from Lagos" resolves to filtered results.',
+            },
+            {
+              icon: "◻",
+              title: "Role Enforcement",
+              desc: "Admin and Analyst tiers. Every endpoint gated. Delete requires Admin. Export requires Admin.",
+            },
+          ].map((f) => (
+            <div
+              key={f.title}
+              className="bg-[#0D1117] p-8 hover:bg-[#111820] transition-colors group"
             >
-              Start Free Trial
-            </Link>
-            <Link
-              href="#features"
-              className="px-8 py-4 border-2 border-gray-900 text-gray-900 rounded-lg hover:bg-gray-50 transition-colors font-semibold"
-            >
-              View Features
-            </Link>
-          </div>
+              <div className="text-2xl text-[#00FF88] mb-4 group-hover:scale-110 transition-transform inline-block">
+                {f.icon}
+              </div>
+              <h3 className="text-sm font-bold tracking-widest uppercase text-white mb-3">
+                {f.title}
+              </h3>
+              <p className="text-xs text-white/40 leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Footer - Clean and readable */}
-      <footer className="py-12 bg-gray-900 text-gray-400 px-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <FaChartLine className="text-xl text-gray-400" />
-                <span className="text-lg font-bold text-white">
-                  Insighta Labs+
-                </span>
-              </div>
-              <p className="text-sm text-gray-400">
-                Profile Intelligence Platform for modern data analysis.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-4 text-sm">Product</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="#features"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Features
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#api"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    API
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="#how-it-works"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    How It Works
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-4 text-sm">
-                Resources
-              </h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <Link
-                    href="/api/docs"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Documentation
-                  </Link>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    API Reference
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Support
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-4 text-sm">Legal</h4>
-              <ul className="space-y-2 text-sm">
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Terms of Service
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-800 mt-8 pt-8 text-sm text-center text-gray-500">
-            <p>&copy; 2026 Insighta Labs+. All rights reserved.</p>
-          </div>
-        </div>
+      {/* Footer */}
+      <footer className="relative z-10 border-t border-white/5 px-8 py-6 flex items-center justify-between">
+        <span className="text-[10px] text-white/20 tracking-widest uppercase">
+          Insighta Labs+ © 2026
+        </span>
+        <span className="text-[10px] text-white/20">
+          Profile Intelligence System — Stage 3
+        </span>
       </footer>
-    </div>
+
+      <style jsx global>{`
+        @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+        @keyframes gradientShift {
+          0%,
+          100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+      `}</style>
+    </main>
   );
 }

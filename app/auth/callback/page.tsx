@@ -1,52 +1,91 @@
 "use client";
-
-import { useEffect, Suspense } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setAuthTokens } from "@/lib/auth";
+import { Suspense } from "react";
 
-function CallbackContent() {
+function CallbackHandler() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useSearchParams();
 
   useEffect(() => {
-    const access = searchParams.get("access");
-    const refresh = searchParams.get("refresh");
-    const role = searchParams.get("role");
+    const access = params.get("access");
+    const refresh = params.get("refresh");
+    const role = params.get("role");
 
     if (access && refresh) {
-      // Store tokens
-      setAuthTokens(access, refresh, role || "analyst");
-      // Redirect to dashboard
-      router.push("/dashboard");
-    } else {
-      // Error - redirect to login
-      router.push("/login?error=Authentication failed");
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      localStorage.setItem("role", role || "analyst");
     }
-  }, [router, searchParams]);
+    // Always go to dashboard — if no tokens, cookie auth may still work
+    router.replace("/dashboard");
+  }, [params, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-        <p className="mt-2 text-gray-600">Completing sign in...</p>
-      </div>
-    </div>
+    <>
+      <style>{`
+        @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: #080A0F; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+      `}</style>
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "#080A0F",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+          fontFamily: "'Space Mono', monospace",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div
+            style={{
+              width: 20,
+              height: 20,
+              border: "2px solid #00FF88",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span
+            style={{
+              fontSize: 11,
+              letterSpacing: "0.3em",
+              color: "rgba(255,255,255,0.6)",
+              textTransform: "uppercase",
+            }}
+          >
+            Insighta<span style={{ color: "#00FF88" }}>+</span>
+          </span>
+        </div>
+        <p
+          style={{
+            fontSize: 11,
+            color: "rgba(255,255,255,0.3)",
+            letterSpacing: "0.3em",
+            textTransform: "uppercase",
+            animation: "pulse 1.5s ease-in-out infinite",
+          }}
+        >
+          Completing authentication...
+        </p>
+      </main>
+    </>
   );
 }
 
-export default function AuthCallbackPage() {
+export default function AuthCallback() {
   return (
     <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-            <p className="mt-2 text-gray-600">Loading...</p>
-          </div>
-        </div>
-      }
+      fallback={<main style={{ minHeight: "100vh", background: "#080A0F" }} />}
     >
-      <CallbackContent />
+      <CallbackHandler />
     </Suspense>
   );
 }
