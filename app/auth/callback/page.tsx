@@ -1,25 +1,18 @@
 "use client";
 import { useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 function CallbackHandler() {
   const router = useRouter();
-  const params = useSearchParams();
 
   useEffect(() => {
-    const access = params.get("access");
-    const refresh = params.get("refresh");
-    const role = params.get("role");
-
-    if (access && refresh) {
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-      localStorage.setItem("role", role || "analyst");
-    }
-    // Always go to dashboard — if no tokens, cookie auth may still work
+    // Tokens are delivered as httpOnly cookies by the backend redirect.
+    // Do NOT read query params or write to localStorage — cookies are
+    // automatically sent on every subsequent request when credentials: "include"
+    // is used. Just proceed to the dashboard.
     router.replace("/dashboard");
-  }, [params, router]);
+  }, [router]);
 
   return (
     <>

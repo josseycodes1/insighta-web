@@ -24,6 +24,9 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE}/api/v1/auth/login/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        // credentials: "include" ensures the backend's Set-Cookie response
+        // headers are accepted and stored by the browser as httpOnly cookies.
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -34,7 +37,8 @@ export default function LoginPage() {
         return;
       }
 
-      // Role is returned in the body; store for UI use
+      // Do NOT store tokens in localStorage. The backend sets httpOnly cookies.
+      // Role is non-sensitive display info only — safe to keep in localStorage.
       localStorage.setItem("role", data.role || "analyst");
       router.push("/dashboard");
     } catch {
@@ -45,6 +49,7 @@ export default function LoginPage() {
   };
 
   const handleGitHubLogin = () => {
+    // Full page redirect — backend sets cookies and redirects to /auth/callback
     window.location.href = `${API_BASE}/auth/github`;
   };
 

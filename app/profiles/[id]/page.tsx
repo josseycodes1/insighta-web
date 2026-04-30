@@ -21,12 +21,6 @@ interface Profile {
   created_at: string;
 }
 
-function getToken() {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("access_token")
-    : null;
-}
-
 export default function ProfileDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -34,12 +28,11 @@ export default function ProfileDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const token = getToken();
+    // credentials: "include" sends the httpOnly access_token cookie automatically.
+    // No Authorization header needed — the backend reads from the cookie.
     fetch(`${API_BASE}/api/profiles/${id}/`, {
-      headers: {
-        "X-API-Version": "1",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      credentials: "include",
+      headers: { "X-API-Version": "1" },
     })
       .then(async (res) => {
         if (res.status === 401) {
@@ -65,7 +58,9 @@ export default function ProfileDetailPage() {
         <h1 className="text-3xl font-black mt-8 mb-8">Profile Detail</h1>
 
         {error && <p className="text-sm text-red-400">{error}</p>}
-        {!error && !profile && <p className="text-sm text-white/40">Loading...</p>}
+        {!error && !profile && (
+          <p className="text-sm text-white/40">Loading...</p>
+        )}
 
         {profile && (
           <section className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/10">
@@ -83,7 +78,9 @@ export default function ProfileDetailPage() {
                 <div className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">
                   {label}
                 </div>
-                <div className="text-sm text-white/80 capitalize">{value}</div>
+                <div className="text-sm text-white/80 capitalize">
+                  {String(value)}
+                </div>
               </div>
             ))}
           </section>

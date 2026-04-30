@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch, getRole } from "../lib/auth";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -16,35 +17,8 @@ interface Profile {
   created_at?: string;
 }
 
-function getToken() {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("access_token")
-    : null;
-}
-
-function getRole() {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("role") || "analyst"
-    : "analyst";
-}
-
-async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = getToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    "X-API-Version": "1",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...((options.headers as Record<string, string>) || {}),
-  };
-  return fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers,
-  });
-}
-
 export default function DashboardPage() {
   const router = useRouter();
-  // Lazy initializer reads localStorage once on mount — no effect needed
   const [role] = useState<string>(() => getRole());
   const isAdmin = role === "admin";
 
@@ -69,25 +43,21 @@ export default function DashboardPage() {
 
   const limit = 10;
 
-  // Main profile fetch — inline, no external function call
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       setLoading(true);
       setError("");
       try {
-        const token = getToken();
         const params = new URLSearchParams({
           page: String(page),
           limit: String(limit),
         });
         if (genderFilter) params.set("gender", genderFilter);
-        const res = await fetch(`${API_BASE}/api/profiles/?${params}`, {
-          headers: {
-            "Content-Type": "application/json",
-            "X-API-Version": "1",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+
+        // apiFetch sends credentials (cookies) automatically — no token needed
+        const res = await apiFetch(`${API_BASE}/api/profiles/?${params}`, {
+          headers: { "X-API-Version": "1" },
         });
         if (cancelled) return;
         if (res.status === 401) {
@@ -120,7 +90,8 @@ export default function DashboardPage() {
     setError("");
     try {
       const res = await apiFetch(
-        `/api/profiles/search/?q=${encodeURIComponent(query)}`,
+        `${API_BASE}/api/profiles/search/?q=${encodeURIComponent(query)}`,
+        { headers: { "X-API-Version": "1" } },
       );
       if (res.status === 401) {
         router.push("/login");
@@ -141,8 +112,12 @@ export default function DashboardPage() {
     setCreating(true);
     setCreateMsg("");
     try {
-      const res = await apiFetch("/api/profiles/", {
+      const res = await apiFetch(`${API_BASE}/api/profiles/`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Version": "1",
+        },
         body: JSON.stringify({ name: createName.trim().toLowerCase() }),
       });
       const data = await res.json();
@@ -165,7 +140,10 @@ export default function DashboardPage() {
     if (!isAdmin) return;
     setDeletingId(id);
     try {
-      await apiFetch(`/api/profiles/${id}/`, { method: "DELETE" });
+      await apiFetch(`${API_BASE}/api/profiles/${id}/`, {
+        method: "DELETE",
+        headers: { "X-API-Version": "1" },
+      });
       setRefreshTick((t) => t + 1);
     } catch {
       setError("Delete failed.");
@@ -177,12 +155,9 @@ export default function DashboardPage() {
   const handleExportCSV = async () => {
     if (!isAdmin) return;
     try {
-      const token = getToken();
-      const res = await fetch(`${API_BASE}/api/profiles/export/csv/`, {
-        headers: {
-          "X-API-Version": "1",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+      // apiFetch sends the access_token cookie — no Authorization header needed
+      const res = await apiFetch(`${API_BASE}/api/profiles/export/csv/`, {
+        headers: { "X-API-Version": "1" },
       });
       if (!res.ok) {
         setError("Export failed.");
@@ -202,7 +177,8 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     try {
-      await apiFetch("/auth/logout", { method: "POST" });
+      // Send refresh cookie to backend so it can blacklist the token
+      await apiFetch(`${API_BASE}/auth/logout`, { method: "POST" });
     } catch {}
     localStorage.clear();
     router.push("/login");
@@ -272,6 +248,7 @@ export default function DashboardPage() {
                 Insighta<span style={{ color: "#00FF88" }}>+</span>
               </span>
             </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span
                 style={{

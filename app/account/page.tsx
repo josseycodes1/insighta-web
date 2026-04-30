@@ -2,25 +2,50 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
 
-function getRole() {
-  return typeof window !== "undefined"
-    ? localStorage.getItem("role") || "analyst"
-    : "analyst";
-}
-
 export default function AccountPage() {
   const router = useRouter();
-  const role = getRole();
+  const [role, setRole] = useState<string>("...");
+  const [username, setUsername] = useState<string>("");
+
+  useEffect(() => {
+    // Fetch real user data from the backend — cookie is sent automatically.
+    // Do NOT read role from localStorage; that could be stale or spoofed.
+    fetch(`${API_BASE}/api/users/me`, {
+      credentials: "include",
+      headers: { "X-API-Version": "1" },
+    })
+      .then(async (res) => {
+        if (res.status === 401) {
+          router.push("/login");
+          return null;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (!data) return;
+        const user = data.data ?? data;
+        setRole(user.role || "analyst");
+        setUsername(user.username || user.email || "");
+      })
+      .catch(() => {
+        // Fallback to cached role for display only — not used for auth
+        setRole(localStorage.getItem("role") || "analyst");
+      });
+  }, [router]);
 
   const handleLogout = async () => {
     try {
       await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
+        // credentials: "include" sends the refresh_token cookie so the backend
+        // can blacklist it server-side before deleting the cookies.
+        credentials: "include",
       });
     } finally {
       localStorage.clear();
@@ -47,6 +72,15 @@ export default function AccountPage() {
         <p className="text-sm text-white/40 mb-8">
           Current access level and session controls.
         </p>
+
+        {username && (
+          <section className="border border-white/10 bg-[#0D1117] p-6 mb-4">
+            <div className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">
+              Username
+            </div>
+            <div className="text-lg font-bold text-white/80">@{username}</div>
+          </section>
+        )}
 
         <section className="border border-white/10 bg-[#0D1117] p-6">
           <div className="text-[10px] uppercase tracking-[0.3em] text-white/30 mb-2">
