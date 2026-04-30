@@ -76,7 +76,7 @@ export default function LoginPage() {
         </p>
         <p className="mt-2 text-center text-[10px] text-white/20">
           <Link href="/" className="hover:text-white/40 transition-colors">
-            <- Back to home
+            ← Back to home
           </Link>
         </p>
       </div>

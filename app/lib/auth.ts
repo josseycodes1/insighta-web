@@ -44,7 +44,7 @@ export interface CurrentUser {
  */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
-    const res = await apiFetch("/api/v1/auth/user/", {
+    const res = await apiFetch("/api/users/me", {
       headers: { "X-API-Version": "1" },
     });
     if (!res.ok) return null;
