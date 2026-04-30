@@ -60,9 +60,9 @@ export default function LoginPage() {
         </button>
 
         <p className="text-[10px] text-white/25 leading-5">
-          Authentication for the web app is handled entirely through GitHub OAuth.
-          Your session tokens are issued by the backend as HttpOnly cookies after
-          the redirect completes.
+          Authentication for the web app is handled entirely through GitHub
+          OAuth. Your session tokens are issued by the backend as HttpOnly
+          cookies after the redirect completes.
         </p>
 
         <p className="mt-8 text-center text-[10px] text-white/20">
