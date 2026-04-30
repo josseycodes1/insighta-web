@@ -40,7 +40,6 @@ export default function ProfileDetailPage() {
         "X-API-Version": "1",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-      credentials: "include",
     })
       .then(async (res) => {
         if (res.status === 401) {

@@ -39,7 +39,6 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   return fetch(`${API_BASE}${path}`, {
     ...options,
     headers,
-    credentials: "include",
   });
 }
 
@@ -89,7 +88,6 @@ export default function DashboardPage() {
             "X-API-Version": "1",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          credentials: "include",
         });
         if (cancelled) return;
         if (res.status === 401) {
@@ -185,7 +183,6 @@ export default function DashboardPage() {
           "X-API-Version": "1",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        credentials: "include",
       });
       if (!res.ok) {
         setError("Export failed.");

@@ -21,7 +21,6 @@ export default function AccountPage() {
     try {
       await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
-        credentials: "include",
       });
     } finally {
       localStorage.clear();

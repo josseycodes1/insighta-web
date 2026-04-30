@@ -44,7 +44,6 @@ export default function SearchPage() {
             "X-API-Version": "1",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          credentials: "include",
         },
       );
       if (res.status === 401) {
