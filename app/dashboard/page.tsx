@@ -2,7 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
 
 interface Profile {
   id: string;
