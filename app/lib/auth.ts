@@ -3,62 +3,9 @@ const API_BASE =
   "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
 
 /**
- * Parse a named value from document.cookie.
- */
-function getCookie(name: string): string | null {
-  if (typeof document === "undefined") return null;
-  const regex = new RegExp(`(?:^|; )${encodeURIComponent(name)}=([^;]*)`);
-  const match = document.cookie.match(regex);
-  return match ? decodeURIComponent(match[1]) : null;
-}
-
-/**
- * Set a cookie for the authenticated web session.
- */
-export function setCookie(
-  name: string,
-  value: string,
-  options: {
-    path?: string;
-    maxAge?: number;
-    sameSite?: "Lax" | "Strict" | "None";
-    secure?: boolean;
-  } = {},
-): void {
-  if (typeof document === "undefined") return;
-
-  const opts = {
-    path: "/",
-    sameSite: "Lax",
-    secure: window.location.protocol === "https:",
-    ...options,
-  };
-
-  const parts = [`${encodeURIComponent(name)}=${encodeURIComponent(value)}`];
-  if (opts.maxAge != null) parts.push(`Max-Age=${Math.floor(opts.maxAge)}`);
-  parts.push(`Path=${opts.path}`);
-  parts.push(`SameSite=${opts.sameSite}`);
-  if (opts.secure) parts.push("Secure");
-
-  document.cookie = parts.join("; ");
-}
-
-export function deleteCookie(name: string): void {
-  if (typeof document === "undefined") return;
-  document.cookie =
-    `${encodeURIComponent(name)}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax` +
-    (window.location.protocol === "https:" ? "; Secure" : "");
-}
-
-/**
  * Wrapper around fetch that:
  * - Always sends credentials (httpOnly cookies) — no Authorization header
  * - Prepends API_BASE if a relative path is given
- * - Accepts the same signature as native fetch
- *
- * For web: the browser automatically attaches the access_token httpOnly cookie.
- * For CLI: tokens are stored in ~/.insighta/credentials.json and attached
- *          manually in the CLI codebase — this helper is web-only.
  */
 export async function apiFetch(
   input: string,
@@ -77,18 +24,40 @@ export async function apiFetch(
   });
 }
 
+export interface CurrentUser {
+  id: string;
+  github_id?: string;
+  username: string;
+  email: string;
+  avatar_url?: string;
+  role: string;
+  is_active: boolean;
+  last_login_at?: string;
+  created_at?: string;
+}
+
 /**
- * Returns the user's role for UI display only.
+ * Fetches the current authenticated user from the backend.
+ * Role is read from the JWT on the server — never from localStorage
+ * or a JS-readable cookie.
+ * Returns null if unauthenticated (401) or on network error.
  */
-export function getRole(): string {
-  if (typeof window === "undefined") return "analyst";
-  return getCookie("role") || "analyst";
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  try {
+    const res = await apiFetch("/api/v1/auth/user/", {
+      headers: { "X-API-Version": "1" },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    // handle both {data: {...}} and flat response shapes
+    return (json.data ?? json) as CurrentUser;
+  } catch {
+    return null;
+  }
 }
 
-export function setRoleCookie(role: string): void {
-  setCookie("role", role, { maxAge: 60 * 60 * 24 * 7 });
-}
-
-export function clearRoleCookie(): void {
-  deleteCookie("role");
+export async function logout(): Promise<void> {
+  try {
+    await apiFetch("/auth/logout", { method: "POST" });
+  } catch {}
 }

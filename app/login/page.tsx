@@ -2,10 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
+import { apiFetch } from "../lib/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,18 +12,19 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [focused, setFocused] = useState<string | null>(null);
 
+  const API_BASE =
+    process.env.NEXT_PUBLIC_API_URL ||
+    "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch(`${API_BASE}/api/v1/auth/login/`, {
+      const res = await apiFetch("/api/v1/auth/login/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // credentials: "include" ensures the backend's Set-Cookie response
-        // headers are accepted and stored by the browser as httpOnly cookies.
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -37,9 +35,9 @@ export default function LoginPage() {
         return;
       }
 
-      // Do NOT store tokens in localStorage. The backend sets httpOnly cookies.
-      // Role is non-sensitive display info only — safe to keep in localStorage.
-      localStorage.setItem("role", data.role || "analyst");
+      // Do NOT store tokens or role in localStorage.
+      // The backend sets httpOnly cookies.
+      // Role is fetched from /api/v1/auth/user/ on the dashboard.
       router.push("/dashboard");
     } catch {
       setError("Network error. Check your connection.");

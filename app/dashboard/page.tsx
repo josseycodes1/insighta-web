@@ -1,7 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { apiFetch, getRole } from "../lib/auth";
+import {
+  apiFetch,
+  getCurrentUser,
+  logout,
+  type CurrentUser,
+} from "../lib/auth";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
@@ -19,8 +24,12 @@ interface Profile {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [role] = useState<string>(() => getRole());
-  const isAdmin = role === "admin";
+
+  // User is fetched from the backend — role comes from the JWT on the server,
+  // never from localStorage or a JS-readable cookie.
+  const [user, setUser] = useState<CurrentUser | null>(null);
+  const [userLoading, setUserLoading] = useState(true);
+  const isAdmin = user?.role === "admin";
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [total, setTotal] = useState(0);
@@ -43,7 +52,23 @@ export default function DashboardPage() {
 
   const limit = 10;
 
+  // Step 1: fetch the current user once on mount to get real role
   useEffect(() => {
+    getCurrentUser().then((u) => {
+      if (!u) {
+        // Not authenticated — send to login
+        router.replace("/login");
+        return;
+      }
+      setUser(u);
+      setUserLoading(false);
+    });
+  }, [router]);
+
+  // Step 2: fetch profiles only after we know the user
+  useEffect(() => {
+    if (userLoading) return; // wait until user is resolved
+
     let cancelled = false;
     const run = async () => {
       setLoading(true);
@@ -55,13 +80,12 @@ export default function DashboardPage() {
         });
         if (genderFilter) params.set("gender", genderFilter);
 
-        // apiFetch sends credentials (cookies) automatically — no token needed
-        const res = await apiFetch(`${API_BASE}/api/profiles/?${params}`, {
+        const res = await apiFetch(`/api/profiles/?${params}`, {
           headers: { "X-API-Version": "1" },
         });
         if (cancelled) return;
         if (res.status === 401) {
-          router.push("/login");
+          router.replace("/login");
           return;
         }
         const data = await res.json();
@@ -79,7 +103,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [page, genderFilter, refreshTick, router]);
+  }, [page, genderFilter, refreshTick, router, userLoading]);
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -90,11 +114,11 @@ export default function DashboardPage() {
     setError("");
     try {
       const res = await apiFetch(
-        `${API_BASE}/api/profiles/search/?q=${encodeURIComponent(query)}`,
+        `/api/profiles/search/?q=${encodeURIComponent(query)}`,
         { headers: { "X-API-Version": "1" } },
       );
       if (res.status === 401) {
-        router.push("/login");
+        router.replace("/login");
         return;
       }
       const data = await res.json();
@@ -112,7 +136,7 @@ export default function DashboardPage() {
     setCreating(true);
     setCreateMsg("");
     try {
-      const res = await apiFetch(`${API_BASE}/api/profiles/`, {
+      const res = await apiFetch(`/api/profiles/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +164,7 @@ export default function DashboardPage() {
     if (!isAdmin) return;
     setDeletingId(id);
     try {
-      await apiFetch(`${API_BASE}/api/profiles/${id}/`, {
+      await apiFetch(`/api/profiles/${id}/`, {
         method: "DELETE",
         headers: { "X-API-Version": "1" },
       });
@@ -155,8 +179,7 @@ export default function DashboardPage() {
   const handleExportCSV = async () => {
     if (!isAdmin) return;
     try {
-      // apiFetch sends the access_token cookie — no Authorization header needed
-      const res = await apiFetch(`${API_BASE}/api/profiles/export/csv/`, {
+      const res = await apiFetch(`/api/profiles/export/csv/`, {
         headers: { "X-API-Version": "1" },
       });
       if (!res.ok) {
@@ -176,14 +199,60 @@ export default function DashboardPage() {
   };
 
   const handleLogout = async () => {
-    try {
-      // Send refresh cookie to backend so it can blacklist the token
-      await apiFetch(`${API_BASE}/auth/logout`, { method: "POST" });
-    } catch {}
+    await logout();
     localStorage.clear();
     router.push("/login");
   };
 
+  // Show a minimal loader while we wait for the user to resolve.
+  // This prevents a flash of "analyst" UI before the real role arrives.
+  if (userLoading) {
+    return (
+      <>
+        <style>{`
+          @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
+          * { box-sizing: border-box; }
+          body { margin: 0; background: #080A0F; }
+          @keyframes spin { to { transform: rotate(360deg); } }
+        `}</style>
+        <main
+          style={{
+            minHeight: "100vh",
+            background: "#080A0F",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+            gap: 16,
+            fontFamily: "'Space Mono', monospace",
+          }}
+        >
+          <div
+            style={{
+              width: 24,
+              height: 24,
+              border: "2px solid #00FF88",
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }}
+          />
+          <span
+            style={{
+              fontSize: 11,
+              color: "rgba(255,255,255,0.3)",
+              letterSpacing: "0.3em",
+              textTransform: "uppercase",
+            }}
+          >
+            Loading session...
+          </span>
+        </main>
+      </>
+    );
+  }
+
+  const role = user?.role ?? "analyst";
   const displayedProfiles = searchResults ?? profiles;
   const totalPages = Math.ceil(total / limit);
 
@@ -193,6 +262,7 @@ export default function DashboardPage() {
         @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap");
         * { box-sizing: border-box; }
         body { margin: 0; background: #080A0F; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
       <main
         style={{
@@ -247,6 +317,17 @@ export default function DashboardPage() {
               >
                 Insighta<span style={{ color: "#00FF88" }}>+</span>
               </span>
+              {user?.username && (
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "rgba(255,255,255,0.2)",
+                    letterSpacing: "0.1em",
+                  }}
+                >
+                  · @{user.username}
+                </span>
+              )}
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -357,73 +438,98 @@ export default function DashboardPage() {
               marginBottom: 24,
             }}
           >
-            {/* Create */}
-            <form
-              onSubmit={handleCreate}
-              style={{
-                padding: 20,
-                border: "1px solid rgba(255,255,255,0.08)",
-                background: "#0D1117",
-              }}
-            >
-              <div
+            {/* Create — admin only */}
+            {isAdmin ? (
+              <form
+                onSubmit={handleCreate}
                 style={{
-                  fontSize: 10,
-                  letterSpacing: "0.3em",
-                  color: "rgba(255,255,255,0.3)",
-                  textTransform: "uppercase",
-                  marginBottom: 12,
+                  padding: 20,
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "#0D1117",
                 }}
               >
-                Create Profile
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  value={createName}
-                  onChange={(e) => setCreateName(e.target.value)}
-                  placeholder="Enter full name..."
-                  style={{
-                    flex: 1,
-                    background: "rgba(255,255,255,0.03)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    padding: "10px 12px",
-                    fontSize: 13,
-                    color: "white",
-                    outline: "none",
-                    fontFamily: "inherit",
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={creating}
-                  style={{
-                    padding: "10px 16px",
-                    background: "#00FF88",
-                    color: "black",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    border: "none",
-                    cursor: creating ? "not-allowed" : "pointer",
-                    opacity: creating ? 0.5 : 1,
-                    fontFamily: "inherit",
-                  }}
-                >
-                  {creating ? "..." : "+"}
-                </button>
-              </div>
-              {createMsg && (
                 <div
                   style={{
-                    marginTop: 8,
-                    fontSize: 12,
-                    color: createMsg.startsWith("✓") ? "#00FF88" : "#f87171",
+                    fontSize: 10,
+                    letterSpacing: "0.3em",
+                    color: "rgba(255,255,255,0.3)",
+                    textTransform: "uppercase",
+                    marginBottom: 12,
                   }}
                 >
-                  {createMsg}
+                  Create Profile
                 </div>
-              )}
-            </form>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    type="text"
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    placeholder="Enter full name..."
+                    style={{
+                      flex: 1,
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      padding: "10px 12px",
+                      fontSize: 13,
+                      color: "white",
+                      outline: "none",
+                      fontFamily: "inherit",
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    style={{
+                      padding: "10px 16px",
+                      background: "#00FF88",
+                      color: "black",
+                      fontSize: 12,
+                      fontWeight: 700,
+                      border: "none",
+                      cursor: creating ? "not-allowed" : "pointer",
+                      opacity: creating ? 0.5 : 1,
+                      fontFamily: "inherit",
+                    }}
+                  >
+                    {creating ? "..." : "+"}
+                  </button>
+                </div>
+                {createMsg && (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      fontSize: 12,
+                      color: createMsg.startsWith("✓") ? "#00FF88" : "#f87171",
+                    }}
+                  >
+                    {createMsg}
+                  </div>
+                )}
+              </form>
+            ) : (
+              /* Analyst placeholder — no create access */
+              <div
+                style={{
+                  padding: 20,
+                  border: "1px solid rgba(255,255,255,0.04)",
+                  background: "#0D1117",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    color: "rgba(255,255,255,0.15)",
+                    letterSpacing: "0.2em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Create requires admin role
+                </span>
+              </div>
+            )}
 
             {/* Search */}
             <div
@@ -646,7 +752,6 @@ export default function DashboardPage() {
                 >
                   Loading...
                 </span>
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
               </div>
             ) : displayedProfiles.length === 0 ? (
               <div
