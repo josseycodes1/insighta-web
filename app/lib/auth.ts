@@ -2,11 +2,6 @@ const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   "https://rofile--ntegration-adewumijosephine3516-kodp7ruz.leapcell.dev";
 
-/**
- * Wrapper around fetch that:
- * - Always sends credentials (httpOnly cookies) — no Authorization header
- * - Prepends API_BASE if a relative path is given
- */
 export async function apiFetch(
   input: string,
   init: RequestInit = {},
@@ -36,12 +31,6 @@ export interface CurrentUser {
   created_at?: string;
 }
 
-/**
- * Fetches the current authenticated user from the backend.
- * Role is read from the JWT on the server — never from localStorage
- * or a JS-readable cookie.
- * Returns null if unauthenticated (401) or on network error.
- */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   try {
     const res = await apiFetch("/api/users/me", {
@@ -49,7 +38,6 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     });
     if (!res.ok) return null;
     const json = await res.json();
-    // handle both {data: {...}} and flat response shapes
     return (json.data ?? json) as CurrentUser;
   } catch {
     return null;

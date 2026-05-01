@@ -28,8 +28,6 @@ export default function ProfileDetailPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // credentials: "include" sends the httpOnly access_token cookie automatically.
-    // No Authorization header needed — the backend reads from the cookie.
     fetch(`${API_BASE}/api/profiles/${id}/`, {
       credentials: "include",
       headers: { "X-API-Version": "1" },

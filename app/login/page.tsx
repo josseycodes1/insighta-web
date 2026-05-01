@@ -12,7 +12,6 @@ export default function LoginPage() {
 
   const handleGitHubLogin = () => {
     setLoading(true);
-    // Full page redirect — backend sets cookies and redirects to /auth/callback
     window.location.href = `${API_BASE}/auth/github`;
   };
 

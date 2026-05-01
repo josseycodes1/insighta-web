@@ -7,10 +7,6 @@ function CallbackHandler() {
   const router = useRouter();
 
   useEffect(() => {
-    // Tokens are delivered as httpOnly cookies by the backend redirect.
-    // Do NOT read query params or write to localStorage — cookies are
-    // automatically sent on every subsequent request when credentials: "include"
-    // is used. Just proceed to the dashboard.
     router.replace("/dashboard");
   }, [router]);
 

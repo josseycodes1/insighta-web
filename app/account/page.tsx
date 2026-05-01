@@ -14,8 +14,6 @@ export default function AccountPage() {
   const [username, setUsername] = useState<string>("");
 
   useEffect(() => {
-    // Fetch real user data from the backend — cookie is sent automatically.
-    // Do NOT read role from localStorage; that could be stale or spoofed.
     fetch(`${API_BASE}/api/users/me`, {
       credentials: "include",
       headers: { "X-API-Version": "1" },
@@ -34,7 +32,6 @@ export default function AccountPage() {
         setUsername(user.username || user.email || "");
       })
       .catch(() => {
-        // Fallback to cached role for display only — not used for auth
         setRole(localStorage.getItem("role") || "analyst");
       });
   }, [router]);
@@ -43,8 +40,6 @@ export default function AccountPage() {
     try {
       await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
-        // credentials: "include" sends the refresh_token cookie so the backend
-        // can blacklist it server-side before deleting the cookies.
         credentials: "include",
       });
     } finally {

@@ -25,8 +25,6 @@ interface Profile {
 export default function DashboardPage() {
   const router = useRouter();
 
-  // User is fetched from the backend — role comes from the JWT on the server,
-  // never from localStorage or a JS-readable cookie.
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
   const isAdmin = user?.role === "admin";
@@ -52,11 +50,9 @@ export default function DashboardPage() {
 
   const limit = 10;
 
-  // Step 1: fetch the current user once on mount to get real role
   useEffect(() => {
     getCurrentUser().then((u) => {
       if (!u) {
-        // Not authenticated — send to login
         router.replace("/login");
         return;
       }
@@ -65,9 +61,8 @@ export default function DashboardPage() {
     });
   }, [router]);
 
-  // Step 2: fetch profiles only after we know the user
   useEffect(() => {
-    if (userLoading) return; // wait until user is resolved
+    if (userLoading) return;
 
     let cancelled = false;
     const run = async () => {
@@ -204,8 +199,6 @@ export default function DashboardPage() {
     router.push("/login");
   };
 
-  // Show a minimal loader while we wait for the user to resolve.
-  // This prevents a flash of "analyst" UI before the real role arrives.
   if (userLoading) {
     return (
       <>
@@ -507,7 +500,6 @@ export default function DashboardPage() {
                 )}
               </form>
             ) : (
-              /* Analyst placeholder — no create access */
               <div
                 style={{
                   padding: 20,
